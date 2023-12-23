@@ -63,10 +63,32 @@ async function checkMention(message: Message, client: Client)
 async function checkTwitterLink(message: Message)
 {
 	let msg = message.content;
-	let newMsg = msg.replace("https://twitter.com/", "https://vxtwitter.com/");
-	newMsg = msg.replace("https://x.com/", "https://vxtwitter.com/");
-	
-	await message.channel.send(newMsg);
+
+	const twitterRegexWithCapture = /(https:\/\/)twitter\.com\S*/;
+	let twitterMatch = message.content.match(twitterRegexWithCapture);
+
+	let twitterModifiedLink = twitterMatch
+		? `${twitterMatch[1]}vx${twitterMatch[0].substring(twitterMatch[1].length)}`
+		: null;
+
+	if(twitterModifiedLink != null)
+	{
+		await message.channel.send(twitterModifiedLink);
+	}
+	else
+	{
+		const xRegexWithCapture = /(https:\/\/)twitter\.com\S*/;
+		let xMatch = message.content.match(xRegexWithCapture);
+
+		let xModifiedLink = xMatch
+			? `${xMatch[1]}vx${xMatch[0].substring(xMatch[1].length)}`
+			: null;
+
+		if(xModifiedLink != null)
+		{
+			await message.channel.send(xModifiedLink);
+		}
+	}
 }
 
 export default event;
