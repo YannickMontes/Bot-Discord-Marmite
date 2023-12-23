@@ -77,11 +77,11 @@ async function checkTwitterLink(message: Message)
 	}
 	else
 	{
-		const xRegexWithCapture = /(https:\/\/)twitter\.com\S*/;
-		let xMatch = message.content.match(xRegexWithCapture);
+		const xRegexWithCapture = /(https:\/\/)x\.com(\S*)/;
+		const xMatch = message.content.match(xRegexWithCapture);
 
-		let xModifiedLink = xMatch
-			? `${xMatch[1]}vx${xMatch[0].substring(xMatch[1].length)}`
+		const xModifiedLink = xMatch
+			? `${xMatch[1]}vxtwitter.com${xMatch[2]}`
 			: null;
 
 		if(xModifiedLink != null)
