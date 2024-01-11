@@ -17,6 +17,7 @@
     "@types/node": "^18.11.18",
     "@types/twitter": "^1.7.1",
     "@types/yt-search": "^2.3.2",
+    "axios": "^1.6.3",
     "discord-api-types": "^0.37.25",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",

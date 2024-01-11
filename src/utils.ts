@@ -1,4 +1,7 @@
-import { Guild, User } from "discord.js";
+import { APIApplicationCommandOptionChoice, Colors, Guild, User } from "discord.js";
+import { KnownLeagueCodes, StageSlug } from "./LoL/LolAPItypes";
+
+export const UNKNOWN_RANKING_CHAR = "?";
 
 export function getUserFromMention(
 	client: any,
@@ -67,4 +70,95 @@ export async function checkIfUserIsMarmiteOwner(user: User, guild: Guild | null)
 	let member = allmembers?.get(user.id);
 	let role = member?.roles.cache.find(role => role.name == process.env.OWNER_ROLE_NAME);
 	return role != undefined;
+}
+
+export function GetLeagueCodeSlashCommandChoices(): APIApplicationCommandOptionChoice<string>[] 
+{
+	let choices: APIApplicationCommandOptionChoice<string>[] = [];
+	for (let enumValue of Object.values(KnownLeagueCodes)) 
+	{
+		choices.push({ name: enumValue, value: enumValue });
+	}
+	return choices;
+}
+
+export function GetStageSlashCommandChoices(): APIApplicationCommandOptionChoice<string>[] 
+{
+	let choices: APIApplicationCommandOptionChoice<string>[] = [];
+	for (let enumValue of Object.values(StageSlug)) 
+	{
+		choices.push({ name: enumValue, value: enumValue });
+	}
+	return choices;
+} 
+
+export function EnsureRankingIsComplete(ranking: string[]): boolean {
+	for (let rank of ranking) 
+	{
+		if (rank == UNKNOWN_RANKING_CHAR)
+		 return false;
+	}
+	return true;
+}
+
+export function GetRankingDuplicates(ranking: string[]): string[]
+{
+	let duplicates = ranking.filter((item, index) => ranking.indexOf(item) !== index);
+	return [...new Set(duplicates)];
+}
+
+export function MergeRankings(oldRanking: string[], newRanking: string[]): string[] {
+	let mergedRanking: string[] = [];
+	for (let i = 0; i < oldRanking.length; i++) {
+		if (newRanking[i] != UNKNOWN_RANKING_CHAR)
+			mergedRanking.push(newRanking[i]);
+		else mergedRanking.push(oldRanking[i]);
+	}
+	return mergedRanking;
+}
+
+export function GetNiceDate(date: Date, displayHours: boolean)
+{
+	let test = new Date(date);
+	let options: Intl.DateTimeFormatOptions = {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: "2-digit"
+	};
+
+	if(!displayHours)
+	{
+		delete options.hour;
+		delete options.minute;
+	}
+
+	let formattedDate = test.toLocaleString("fr-FR", options);
+	return formattedDate;
+}
+
+export function GetResizedImageURL(url: string) : string
+{
+	let split = url.split("/");
+	const imgixResizedUrl = `https://jnounstudio-306256138.imgix.net/${split[split.length -1]}?w=50&h=50`;
+	return imgixResizedUrl;
+}
+
+export function ConvertLeagueCodeToColor(leagueCode: KnownLeagueCodes)
+{
+	switch(leagueCode)
+	{
+		case KnownLeagueCodes.LEC:
+			return Colors.DarkGreen;
+		case KnownLeagueCodes.LFL:
+			return Colors.Red;
+		case KnownLeagueCodes.LCS:
+			return Colors.Aqua;
+		case KnownLeagueCodes.LCK:
+			return Colors.LightGrey;
+		default:
+			return Colors.Default;
+	}
 }

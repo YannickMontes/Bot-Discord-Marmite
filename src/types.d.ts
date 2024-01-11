@@ -45,7 +45,8 @@ declare global {
 			OWNER_ROLE_NAME: string,
 			MEMBER_ROLE: string,
 			PAIN_CHOC_ROLE: string,
-			CHOCOLATINE_ROLE: string
+			CHOCOLATINE_ROLE: string,
+			TEST_SERVER_ID: string,
 		}
 	}
 }

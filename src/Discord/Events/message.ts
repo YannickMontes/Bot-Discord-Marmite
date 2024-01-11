@@ -39,7 +39,6 @@ async function handleTriggers(message: Message)
 			message.channel.send(guildTrigger.whatToTrigger);
 			await increaseTriggerUse(message.guildId as string, guildTrigger.triggerPhrase, message.author.id);
 			let sentence = await getTriggerThresholdSentence(guildTrigger.guildId, guildTrigger.triggerPhrase);
-			console.log(sentence);
 			if(sentence != null)
 			{
 				await message.channel.send(sentence);
