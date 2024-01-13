@@ -1,4 +1,4 @@
-import { KnownLeagueCodes, LeagueAPI, LeagueTournamentAPI, LoLEvent, TeamAPI, TournamentStandingAPI } from "./LolAPItypes";
+import { KnownLeagueCodes, LeagueAPI, LeagueTournamentAPI, LoLEvent, MatchState, StageSectionAPI, StageSlug, TeamAPI, TournamentStandingAPI } from "./LolAPItypes";
 import axios from "axios";
 
 class LoLAPIHandler 
@@ -115,6 +115,17 @@ class LoLAPIHandler
 		
 		let tournaments = await this.GetAllTournamentsForLeague(wantedLeague);
 		return tournaments.length > 0 ? tournaments[0] : null;
+	}
+
+
+	async TournamentStageHasAtLeastOneCompletedMatch(tournamentId: string, stage: StageSlug)
+	{
+		let standings = await this.GetStandingsForTournament(tournamentId);
+		let wantedStage = standings[0].stages.find(stageAPI => stageAPI.slug == stage);
+		if(!wantedStage)
+			return false;
+		let completedMatches = wantedStage.sections[0].matches.filter(match => match.state == MatchState.Completed);
+		return completedMatches.length > 0;
 	}
 
 	async GetTeams()

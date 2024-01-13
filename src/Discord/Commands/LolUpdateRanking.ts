@@ -39,9 +39,8 @@ export const command: SlashCommand = {
 			if(tournaments != null)
 			{
 				tournamentId = tournaments[0].id;
-				let startDateTournament = new Date(tournaments[0].startDate);
-				startDateTournament.setDate(startDateTournament.getDate() + 2);
-				if(new Date() > startDateTournament)
+				let canUpdate = lolAPIHandler.TournamentStageHasAtLeastOneCompletedMatch(tournamentId, stageSlug);
+				if(!canUpdate)
 				{
 					interaction.editReply(":x: Impossible de modifier le ranking une fois la compétition commencée !\n"
 					+ "Tu peux utiliser la commande lolgetranking pour consulter ton ranking.");
