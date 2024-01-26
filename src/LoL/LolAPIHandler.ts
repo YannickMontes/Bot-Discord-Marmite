@@ -1,4 +1,5 @@
-import { KnownLeagueCodes, LeagueAPI, LeagueTournamentAPI, LoLEvent, MatchState, StageSectionAPI, StageSlug, TeamAPI, TournamentStandingAPI } from "./LolAPItypes";
+import { IsSameDay } from "../utils";
+import { KnownLeagueCodes, LeagueAPI, LeagueTournamentAPI, LoLEvent, MatchState, StageSectionAPI, StageSlug, TeamAPI, TeamRankingRecordAPI, TournamentStandingAPI } from "./LolAPItypes";
 import axios from "axios";
 
 class LoLAPIHandler 
@@ -66,6 +67,23 @@ class LoLAPIHandler
 		return allEvents;
 	}
 
+	async GetDailySchedule(leagueCode:KnownLeagueCodes, date: Date) : Promise<LoLEvent[] | null>
+	{
+		let schedule = await this.GetUpcomingScheduleForLeague(leagueCode);
+		let todaySchedule: LoLEvent[] = [];
+		if(schedule != null)
+		{
+			for(let event of schedule)
+			{
+				if(IsSameDay(date, new Date(event.startTime)))
+				{
+					todaySchedule.push(event);
+				}
+			}
+		}
+		return todaySchedule;
+	}
+
 	async GetCurrentOrUpcomingTournamentsFromCode(leagueCode: KnownLeagueCodes): Promise<LeagueTournamentAPI[] | null>
 	{
 		let leagueAPI = await this.GetLeague(leagueCode);
@@ -128,6 +146,40 @@ class LoLAPIHandler
 		return completedMatches.length > 0;
 	}
 
+	async IsTournamentStageCompleted(tournamentId: string, stage: StageSlug) : Promise<boolean>
+	{
+		let standings = await this.GetStandingsForTournament(tournamentId);
+		let wantedStage = standings[0].stages.find(stageAPI => stageAPI.slug == stage);
+		if(!wantedStage)
+			return false;
+		let isCompleted = wantedStage.sections[0].matches.every(match => match.state == MatchState.Completed);
+		return isCompleted;
+	}
+
+	async GetFinalRankingForTournamentStage(tournamentId: string, stage: StageSlug)
+		: Promise<IFinalRankingResult>
+	{
+		let standings = await this.GetStandingsForTournament(tournamentId);
+		let wantedStage = standings[0].stages.find(stageAPI => stageAPI.slug == stage);
+		if(!wantedStage)
+			return { finalRanking:[], finalRecord:[] };
+		let finalRanking = new Array<string>(10);
+		let finalRecord = new Array<TeamRankingRecordAPI>(10);
+		wantedStage.sections[0].rankings.forEach(ranking => {
+			ranking.teams.forEach(team => {
+				let wantedIndex = ranking.ordinal - 1;
+				while(finalRanking[wantedIndex] != undefined)
+				{
+					wantedIndex++;
+				}
+				finalRanking[wantedIndex] = team.code;
+				if(team.record)
+					finalRecord[wantedIndex] = team.record;
+			});
+		});
+		return { finalRanking, finalRecord };
+	}
+
 	async GetTeams()
 	{
 		let res = await axios.get(this.RIOT_URLS.TEAMS, this.axiosGetConfig);
@@ -135,6 +187,12 @@ class LoLAPIHandler
 		// let LECTeams = res.data.data.teams.filter((team: MatchTeamAPI)  => team.homeLeague && team.homeLeague.name == "LEC" && x.status == "active" && x.players.length > 0);
 		// console.log(LECTeams);
 	}
+}
+
+export interface IFinalRankingResult
+{
+	finalRanking: string[], 
+	finalRecord: TeamRankingRecordAPI[]
 }
 
 const lolAPIHandler = new LoLAPIHandler();

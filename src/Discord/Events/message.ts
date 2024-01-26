@@ -17,7 +17,7 @@ const event: BotEvent = {
 		await handleTriggers(message);
 		await checkBanWords(message, message.content.toLowerCase());
 		await checkMention(message, message.client);
-		await checkTwitterLink(message);
+		// await checkTwitterLink(message);
 	},
 }
 

@@ -2,7 +2,7 @@ import { CommandInteraction, EmbedBuilder, SlashCommandBuilder } from "discord.j
 import { SlashCommand } from "../../types";
 import lolAPIHandler from "../../LoL/LolAPIHandler";
 import { KnownLeagueCodes } from "../../LoL/LolAPItypes";
-import { ConvertLeagueCodeToColor, GetLeagueCodeSlashCommandChoices, GetNiceDate, GetResizedImageURL } from "../../utils";
+import { ConvertLeagueCodeToColor, GetLeagueCodeSlashCommandChoices, GetNiceDate, GetResizedImageURL, MakeDiscordEmbedsForEvents } from "../../utils";
 
 export const command: SlashCommand = {
 	name: "lolschedule",
@@ -17,24 +17,8 @@ export const command: SlashCommand = {
 		let events = await lolAPIHandler.GetUpcomingScheduleForLeague(leagueCode);
 
 		let embeds: EmbedBuilder[] = [];
-		if(events != null && events.length > 0)
-		{
-			for(let event of events)
-			{
-				if(event.state != "completed")
-				{
-					let embed = new EmbedBuilder()
-						.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code}`)
-						.setDescription(`${GetNiceDate(event.startTime, true)}\n`)
-						.setThumbnail(GetResizedImageURL(event.match.teams[0].image))
-						.setImage(GetResizedImageURL(event.match.teams[1].image))
-						.setColor(ConvertLeagueCodeToColor(leagueCode))
-						.setAuthor({name: leagueCode.toUpperCase() + " - " + event.blockName, iconURL: league?.image})
-						.setFooter({text: leagueCode.toUpperCase() + ` - Match ID: ${event.match.id}`, iconURL: league?.image})
-					embeds.push(embed);
-				}
-			}
-		}
+		if(events && league)
+			MakeDiscordEmbedsForEvents(events, leagueCode, league);
 
 		if(embeds.length > 0)
 		{

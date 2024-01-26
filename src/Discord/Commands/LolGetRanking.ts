@@ -84,6 +84,7 @@ export const command: SlashCommand = {
 				.setThumbnail(league?.image as string)
 				.setColor(ConvertLeagueCodeToColor(leagueCode))
 				.setDescription("No ranking.")
+				.setTimestamp(new Date())
 				.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug}`, iconURL: league?.image});
 			interaction.editReply({embeds: [embed]});
 			return;
@@ -140,6 +141,7 @@ export const command: SlashCommand = {
 			.setThumbnail(league?.image as string)
 			.setColor(ConvertLeagueCodeToColor(leagueCode))
 			.setDescription(stringRanking)
+			.setTimestamp(new Date())
 			.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug}`, iconURL: league?.image});
 
 		interaction.editReply({embeds: [embed]});

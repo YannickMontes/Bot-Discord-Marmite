@@ -28,7 +28,8 @@ export const command: SlashCommand = {
 					.setAuthor({name: leagueCode.toUpperCase(), iconURL: league?.image})
 					.setFooter({text: leagueCode.toUpperCase() + ` - Tournament ID: ${tournament.id}`, iconURL: league?.image})
 					.setColor(ConvertLeagueCodeToColor(leagueCode))
-					.setDescription(description);
+					.setDescription(description)
+					.setTimestamp(new Date());
 					embeds.push(embed);
 			}
 		}
@@ -41,6 +42,7 @@ export const command: SlashCommand = {
 					.setAuthor({name: leagueCode.toUpperCase(), iconURL: league?.image})
 					.setFooter({text: leagueCode.toUpperCase(), iconURL: league?.image})
 					.setColor(ConvertLeagueCodeToColor(leagueCode))
+					.setTimestamp(new Date())
 					.setDescription(description);
 			interaction.editReply({embeds: [embed]});
 		}

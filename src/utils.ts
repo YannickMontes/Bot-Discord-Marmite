@@ -1,5 +1,5 @@
-import { APIApplicationCommandOptionChoice, Colors, Guild, User } from "discord.js";
-import { KnownLeagueCodes, StageSlug } from "./LoL/LolAPItypes";
+import { APIApplicationCommandOptionChoice, Colors, EmbedBuilder, Guild, User } from "discord.js";
+import { KnownLeagueCodes, LeagueAPI, LoLEvent, MatchOutcome, StageSlug } from "./LoL/LolAPItypes";
 
 export const UNKNOWN_RANKING_CHAR = "?";
 
@@ -27,6 +27,11 @@ export function getUserIdFromMention(mention: string): string
 export function getUserMentionFromId(id: string): string
 {
 	return `<@!${id}>`;
+}
+
+export function getChannelMentionFromid(id:string): string
+{
+	return `<#${id}>`;
 }
 
 export function isNullOrEmpty(string: string): boolean 
@@ -70,6 +75,17 @@ export async function checkIfUserIsMarmiteOwner(user: User, guild: Guild | null)
 	let member = allmembers?.get(user.id);
 	let role = member?.roles.cache.find(role => role.name == process.env.OWNER_ROLE_NAME);
 	return role != undefined;
+}
+
+export function GetSlashCommandsChoicesForEnum<T extends { [s: string]: unknown; } | ArrayLike<unknown>>(enumParam: T): APIApplicationCommandOptionChoice<string>[]
+{
+	let choices: APIApplicationCommandOptionChoice<string>[] = [];
+	for (let enumValue of Object.values(enumParam)) 
+	{
+		// if(enumValue instanceof String)
+			choices.push({ name: enumValue as string, value: enumValue as string });
+	}
+	return choices;
 }
 
 export function GetLeagueCodeSlashCommandChoices(): APIApplicationCommandOptionChoice<string>[] 
@@ -161,4 +177,63 @@ export function ConvertLeagueCodeToColor(leagueCode: KnownLeagueCodes)
 		default:
 			return Colors.Default;
 	}
+}
+
+export function IsSameDay(date1: Date, date2: Date)
+{
+	return date1.getDate() === date2.getDate()
+	 && date1.getMonth() === date2.getMonth()
+	 && date1.getFullYear() === date2.getFullYear();
+}
+
+export function MakeDiscordEmbedsForEvents(events: LoLEvent[], leagueCode: KnownLeagueCodes, league: LeagueAPI) : EmbedBuilder[]
+{
+	let embeds: EmbedBuilder[] = [];
+	if(events != null && events.length > 0)
+	{
+		for(let event of events)
+		{
+			if(event.state != "completed")
+			{
+				let embed = new EmbedBuilder()
+					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code}`)
+					.setDescription(`${GetNiceDate(event.startTime, true)}\n`)
+					.setThumbnail(GetResizedImageURL(event.match.teams[0].image))
+					.setImage(GetResizedImageURL(event.match.teams[1].image))
+					.setColor(ConvertLeagueCodeToColor(leagueCode))
+					.setAuthor({name: leagueCode.toUpperCase() + " - " + event.blockName, iconURL: league?.image})
+					.setFooter({text: leagueCode.toUpperCase() + ` - Match ID: ${event.match.id}`, iconURL: league?.image})
+					.setTimestamp(new Date(event.startTime))
+				embeds.push(embed);
+			}
+			else
+			{
+				if(!event.match.teams[0].result || !event.match.teams[1].result)
+					continue;
+				let winnerCode = "";
+				let result = "";
+				if(event.match.teams[0].result?.outcome == MatchOutcome.Win)
+				{
+					winnerCode = event.match.teams[0].code;
+					result = event.match.teams[0].result.gameWins + " - " + event.match.teams[1].result.gameWins;
+				}
+				else
+				{
+					winnerCode = event.match.teams[1].code;
+					result = event.match.teams[1].result.gameWins + " - " + event.match.teams[0].result.gameWins;
+				}
+				let embed = new EmbedBuilder()
+					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code}`)
+					.setDescription(`||**${winnerCode} WIN (${result})**||\n`)
+					.setThumbnail(GetResizedImageURL(event.match.teams[0].image))
+					.setImage(GetResizedImageURL(event.match.teams[1].image))
+					.setColor(ConvertLeagueCodeToColor(leagueCode))
+					.setAuthor({name: leagueCode.toUpperCase() + " - " + event.blockName, iconURL: league?.image})
+					.setFooter({text: leagueCode.toUpperCase() + ` - Match ID: ${event.match.id}`, iconURL: league?.image})
+					.setTimestamp(new Date(event.startTime))
+				embeds.push(embed);
+			}
+		}
+	}
+	return embeds;
 }

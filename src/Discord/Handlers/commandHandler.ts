@@ -26,6 +26,6 @@ rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {body: commandJson})
 		.then(() => console.log("Slash commands reloaded."))
 		.catch((error)  => console.log("Error while puting slash commands: \n", error));
 
-// rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.TEST_SERVER_ID), {body: commandJson})
-// 		.then(() => console.log("Slash commands reloaded test server."))
-// 		.catch((error)  => console.log("Error while puting slash commands test server: \n", error));
+rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.TEST_SERVER_ID), {body: commandJson})
+		.then(() => console.log("Slash commands reloaded test server."))
+		.catch((error)  => console.log("Error while puting slash commands test server: \n", error));

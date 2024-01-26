@@ -1,4 +1,4 @@
-import { HydratedDocument } from "mongoose";
+import { Document, HydratedDocument } from "mongoose";
 import { KnownLeagueCodes, StageSlug, StageSlug as TournamentStageSlug } from "../../LoL/LolAPItypes";
 import LolRanking, { ILoLRanking, RankingState } from "../Models/LolRanking";
 
@@ -18,6 +18,13 @@ export interface IActiveTournamentStages
 {
 	tournamentId: string,
 	tournamentStages: StageSlug[]
+}
+
+export interface IWaitingRankings
+{
+	rankings: HydratedDocument<ILoLRanking>[],
+	tournamentId: string, 
+	tournamentStage: StageSlug
 }
 
 class LolRankingDBController
@@ -44,6 +51,28 @@ class LolRankingDBController
 				{$match: {tournamentId: {$in: tournamentsId}, state: RankingState.WAITING}},
 				{$group: {_id: "$tournamentId", tournamentStages : { $addToSet: '$tournamentStage'}}},
 				{$project: {_id: 0, tournamentId: '$_id', tournamentStages: 1}}
+			]);
+			return result;
+		}
+		catch(error)
+		{
+			return [];
+		}
+	}
+
+	async GetAllWaitingRankings() : Promise<IWaitingRankings[]>
+	{
+		try
+		{
+			let result = await LolRanking.aggregate([
+				{$match: {state: RankingState.WAITING}},
+				{$group: 
+					{
+						_id: { tournamentId: "$tournamentId", tournamentStage: "$tournamentStage"},
+						rankings: {$push: "$$ROOT"}
+					}
+				},
+				{$project: {_id: 0, tournamentId: "$_id.tournamentId", tournamentStage: "$_id.tournamentStage", rankings: 1 }}
 			]);
 			return result;
 		}

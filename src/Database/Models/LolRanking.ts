@@ -11,7 +11,7 @@ export interface ILoLRanking
 	tournamentStage: StageSlug
 	ranking: string[],
 	state: RankingState,
-	diffWithRealRanking: string[]
+	diffWithRealRanking: number[]
 }
 
 export enum RankingState
@@ -55,7 +55,7 @@ const LolRankingSchema = new Schema<ILoLRanking>(
 		},
 		diffWithRealRanking:
 		{
-			type: [String],
+			type: [Number],
 			default: []
 		},
 		state:
