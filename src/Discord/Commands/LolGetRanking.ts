@@ -9,8 +9,9 @@ import { KnownLeagueCodes, StageSlug } from "../../LoL/LolAPItypes";
 import lolRankingController, {
 	IRankingResponse,
 } from "../../Database/Controllers/lolRankingController";
-import { ConvertLeagueCodeToColor, EnsureRankingIsComplete, GetLeagueCodeSlashCommandChoices, GetRankingDuplicates, GetStageSlashCommandChoices } from "../../utils";
-import lolAPIHandler from "../../LoL/LolAPIHandler";
+import { ConvertLeagueCodeToColor, EnsureRankingIsComplete, GetLeagueCodeSlashCommandChoices, GetRankingDuplicates, GetStageSlashCommandChoices, GetTeamsOfStageInTournament } from "../../utils";
+import lolAPIHandler, { IFinalRankingResult } from "../../LoL/LolAPIHandler";
+import { RankingState } from "../../Database/Models/LolRanking";
 
 export const command: SlashCommand = {
 	name: "lolgetranking",
@@ -35,30 +36,7 @@ export const command: SlashCommand = {
 			return;
 		}
 		if(tournaments != null)
-			tournamentId = tournaments[0].id;
-		
-
-		let standings = await lolAPIHandler.GetStandingsForTournament(tournamentId);
-		let possiblesTeamTags: string[] = [];
-		if(standings && standings.length > 0)
-		{
-			for(let stage of standings[0].stages)
-			{
-				if(stage.slug == stageSlug)
-				{
-					if(stage.sections[0].rankings.length == 0)
-					{
-						break;
-					}
-					for(let team of stage.sections[0].rankings[0].teams)
-					{
-						if(!possiblesTeamTags.includes(team.code))
-							possiblesTeamTags.push(team.code);
-					}
-				}
-			}
-		}
-
+			tournamentId = tournaments[0].id;	
 
 		let userId = user != null ? user.id : interaction.user.id;
 
@@ -90,11 +68,17 @@ export const command: SlashCommand = {
 			return;
 		}
 		rankingDB = res.ranking;
+
+		let finalRanking: IFinalRankingResult | null = null;
+		if(rankingDB?.state == RankingState.ENDED)
+		{
+			finalRanking = await lolAPIHandler.GetFinalRankingForTournamentStage(rankingDB.tournamentId, stageSlug);
+		}
 		
 		let stringRanking = "";
-		let unknownTeamTags = [];
 		let rankingCorrect:boolean = true;
 		let duplicates: string[] = [];
+		let differenceSum = 0;
 		if(rankingDB != null)
 		{
 			let rankNumber = 1;
@@ -107,33 +91,37 @@ export const command: SlashCommand = {
 						: rankNumber == 3 
 							? "\u200B \u200B \u200B:third_place:"
 							: "";
-				stringRanking += `**${rankNumber} - ${rank}** ${emoji}\n`;
+				let finalTeam = finalRanking != null
+					? `${finalRanking.finalRanking[rankNumber - 1]}`
+					: "";
+				let difference = finalRanking != null
+					? `*(${rankingDB.diffWithRealRanking[rankNumber - 1]})*`
+					: "";
+				differenceSum += finalRanking != null 
+					? Math.abs(rankingDB.diffWithRealRanking[rankNumber - 1])
+					: 0;
+				stringRanking += `**${rankNumber} - ${rank}**`;
+				if(finalTeam != "")
+				{
+					stringRanking += ` | ${difference} | ${finalTeam} `;
+				}
+				stringRanking += `${emoji}\n`;
 				rankNumber++;
-				if(!possiblesTeamTags.includes(rank))
-					unknownTeamTags.push(rank);
 			}
 			rankingCorrect = EnsureRankingIsComplete(rankingDB.ranking);
 			duplicates = GetRankingDuplicates(rankingDB.ranking);
 		}
 
-		let warning = rankingCorrect 
-			? ""
-			: "\n :warning: Your ranking is not completed.";
-
-		warning += duplicates.length > 0 
-			? "\n:warning: Your ranking have duplicates: " + duplicates
-			: "";
-
-		let notFoundTeams = "";
-		if(unknownTeamTags.length > 0)
+		if(rankingDB && rankingDB.state == RankingState.WAITING)
 		{
-			notFoundTeams = "\n :x: Can't found following teams: " + unknownTeamTags;
-			notFoundTeams += "\nPossibles teams are: " + possiblesTeamTags;
+			stringRanking += (!rankingCorrect || duplicates.length > 0)
+				? `\n:x: Ranking not valid.`
+				: "\n:white_check_mark: Ranking valid.";
 		}
-
-		stringRanking += (notFoundTeams != "" || warning != "")
-			? `${notFoundTeams} ${warning}`
-			: "\n:white_check_mark: Ranking valid.";
+		else if(rankingDB && rankingDB.state == RankingState.ENDED)
+		{
+			stringRanking += "\nRanking total difference: " + differenceSum;
+		}
 
 		let embed = new EmbedBuilder()
 			.setTitle(`${user.user.username} ${leagueCode.toUpperCase()} ${stageSlug} Ranking` )

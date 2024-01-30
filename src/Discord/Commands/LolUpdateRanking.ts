@@ -8,7 +8,7 @@ import { KnownLeagueCodes, StageSlug } from "../../LoL/LolAPItypes";
 import lolRankingController, {
 	IRankingResponse,
 } from "../../Database/Controllers/lolRankingController";
-import { ConvertLeagueCodeToColor, EnsureRankingIsComplete, GetLeagueCodeSlashCommandChoices, GetRankingDuplicates, GetStageSlashCommandChoices, MergeRankings, UNKNOWN_RANKING_CHAR, getUserMentionFromId } from "../../utils";
+import { ConvertLeagueCodeToColor, EnsureRankingIsComplete, GetLeagueCodeSlashCommandChoices, GetRankingDuplicates, GetStageSlashCommandChoices, GetTeamsOfStageInTournament, MergeRankings, UNKNOWN_RANKING_CHAR, getUserMentionFromId } from "../../utils";
 import lolAPIHandler from "../../LoL/LolAPIHandler";
 
 export const command: SlashCommand = {
@@ -51,28 +51,10 @@ export const command: SlashCommand = {
 
 		let standings = await lolAPIHandler.GetStandingsForTournament(tournamentId);
 
-		let possiblesTeamTags: string[] = [];
-		if(standings && standings.length > 0)
-		{
-			for(let stage of standings[0].stages)
-			{
-				if(stage.slug == stageSlug)
-				{
-					if(stage.sections[0].rankings.length == 0)
-					{
-						break;
-					}
-					for(let team of stage.sections[0].rankings[0].teams)
-					{
-						if(!possiblesTeamTags.includes(team.code))
-							possiblesTeamTags.push(team.code);
-					}
-				}
-			}
-		}
+		let possiblesTeamTags: string[] = GetTeamsOfStageInTournament(standings[0], stageSlug);
 
 		let unknownTeamTags = [];
-		for (let i = 0; i < 10; i++) 
+		for (let i = 0; i < 10 && i < possiblesTeamTags.length; i++) 
 		{
 			const rankParam = interaction.options.get(`rank${i + 1}`);
 			if (!rankParam) 

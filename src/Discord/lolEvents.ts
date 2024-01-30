@@ -11,7 +11,6 @@ import { MakeDiscordEmbedsForEvents } from "../utils";
 
 export async function registerToNextMidnight()
 {
-	// SendTodaySchedule();
 	let today = new Date();
 	console.log(today);
 	let tommorow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
@@ -30,6 +29,7 @@ registerToNextMidnight();
 async function OnMidnight()
 {
 	SendTodaySchedule();
+	processWaitingRankings();
 	registerToNextMidnight();
 }
 
@@ -96,8 +96,9 @@ async function SendEmbeds(embeds: EmbedBuilder[], channel:TextChannel)
 	}
 }
 
-async function checkNewLolEvents()
+async function processWaitingRankings()
 {
+	console.log("Checking waiting rankings...");
 	let waitingRankings = await lolRankingController.GetAllWaitingRankings();
 	let finishedTournamentStagesPromises : Promise<boolean>[] = [];
 	waitingRankings.forEach(waitingRankings => {
@@ -113,30 +114,43 @@ async function checkNewLolEvents()
 		}
 	}
 
-	if(waitingRankingsFinished.length > 0)
+	if(waitingRankingsFinished.length == 0)
 	{
-		let finalRankingsPromises:Promise<IFinalRankingResult>[] = [];
-		waitingRankingsFinished.forEach(waitingRanking => {
-			finalRankingsPromises.push(lolAPIHandler.GetFinalRankingForTournamentStage(waitingRanking.tournamentId, waitingRanking.tournamentStage));
+		console.log("No waiting rankings to process.");
+		return;
+	}
+	
+	console.log("Updating waiting rankings...");
+	
+	let finalRankingsPromises:Promise<IFinalRankingResult>[] = [];
+	waitingRankingsFinished.forEach(waitingRanking => {
+		finalRankingsPromises.push(lolAPIHandler.GetFinalRankingForTournamentStage(waitingRanking.tournamentId, waitingRanking.tournamentStage));
+	});
+	let finalRankings = await Promise.all(finalRankingsPromises);
+	let allDocumentsSavePromises: any = [];//Promise<Document<ILoLRanking>>[] = [];
+	for(let i = 0; i< waitingRankingsFinished.length; i++)
+	{
+		let finalRanking = finalRankings[i];
+		waitingRankingsFinished[i].rankings.forEach(ranking => {
+			let diffWithRealRanking = new Array<number>(ranking.ranking.length);
+			for(let j=0; j<ranking.ranking.length; j++)
+			{
+				let difference = finalRanking.finalRanking.indexOf(ranking.ranking[j]) - j;
+				diffWithRealRanking[j] = difference;
+			}
+			let state = RankingState.ENDED;
+			let modifyPromise = LolRanking.findByIdAndUpdate(ranking._id, {diffWithRealRanking: diffWithRealRanking
+				, state: state});
+			allDocumentsSavePromises.push(modifyPromise);
 		});
-		let finalRankings = await Promise.all(finalRankingsPromises);
-		let allDocumentsSavePromises: any = [];//Promise<Document<ILoLRanking>>[] = [];
-		for(let i = 0; i< waitingRankingsFinished.length; i++)
-		{
-			let finalRanking = finalRankings[i];
-			waitingRankingsFinished[i].rankings.forEach(ranking => {
-				let diffWithRealRanking = new Array<number>(ranking.ranking.length);
-				for(let j=0; j<ranking.ranking.length; j++)
-				{
-					let difference = finalRanking.finalRanking.indexOf(ranking.ranking[j]) - j;
-					diffWithRealRanking[j] = difference;
-				}
-				let state = RankingState.ENDED;
-				let modifyPromise = LolRanking.findByIdAndUpdate(ranking.id, {diffWithRealRanking: diffWithRealRanking
-					, state: state});
-				allDocumentsSavePromises.push(modifyPromise);
-			});
-		}
+	}
+	try
+	{
 		let allDocumentsSaved = await Promise.all(allDocumentsSavePromises);
+		console.log("Update waiting rankings done.");
+	}
+	catch(error)
+	{
+		console.log(error);
 	}
 }

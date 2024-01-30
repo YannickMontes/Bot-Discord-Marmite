@@ -1,5 +1,5 @@
 import { APIApplicationCommandOptionChoice, Colors, EmbedBuilder, Guild, User } from "discord.js";
-import { KnownLeagueCodes, LeagueAPI, LoLEvent, MatchOutcome, StageSlug } from "./LoL/LolAPItypes";
+import { KnownLeagueCodes, LeagueAPI, LoLEvent, MatchOutcome, StageSlug, TournamentStandingAPI } from "./LoL/LolAPItypes";
 
 export const UNKNOWN_RANKING_CHAR = "?";
 
@@ -236,4 +236,22 @@ export function MakeDiscordEmbedsForEvents(events: LoLEvent[], leagueCode: Known
 		}
 	}
 	return embeds;
+}
+
+export function GetTeamsOfStageInTournament(standings: TournamentStandingAPI, stageSlug: string)
+{
+	let teamCodes: string[] = [];
+	for(let stage of standings.stages)
+	{
+		if(stage.slug != stageSlug)
+			continue;
+		for(let ranking of stage.sections[0].rankings)
+		{
+			for(let team of ranking.teams)
+			{
+				teamCodes.push(team.code);
+			}
+		}
+	}
+	return teamCodes;
 }
