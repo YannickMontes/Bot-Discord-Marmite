@@ -1,5 +1,6 @@
 import { APIApplicationCommandOptionChoice, Colors, EmbedBuilder, Guild, User } from "discord.js";
 import { KnownLeagueCodes, LeagueAPI, LoLEvent, MatchOutcome, StageSlug, TournamentStandingAPI } from "./LoL/LolAPItypes";
+import moment, { locale } from "moment-timezone";
 
 export const UNKNOWN_RANKING_CHAR = "?";
 
@@ -135,23 +136,16 @@ export function MergeRankings(oldRanking: string[], newRanking: string[]): strin
 
 export function GetNiceDate(date: Date, displayHours: boolean)
 {
-	let test = new Date(date);
-	let options: Intl.DateTimeFormatOptions = {
-		weekday: 'long',
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		hour: '2-digit',
-		minute: "2-digit"
-	};
-
+	let timeZone = "Europe/Paris";
+	let niceDate = moment.tz(date, timeZone);
 	if(!displayHours)
-	{
-		delete options.hour;
-		delete options.minute;
-	}
+		niceDate = niceDate.startOf("day");
 
-	let formattedDate = test.toLocaleString("fr-FR", options);
+	let formattedDate = displayHours 
+		? niceDate.locale("fr").format('dddd LL HH:mm')
+		: niceDate.locale("fr").format('dddd LL');
+	
+	formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 	return formattedDate;
 }
 

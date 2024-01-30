@@ -7,17 +7,14 @@ import lolChannelParamsController from "../Database/Controllers/lolChannelParams
 import { ILolChannelParams, LolEventType } from "../Database/Models/LolChannelParams";
 import client from "./client";
 import { EmbedBuilder, TextChannel } from "discord.js";
-import { MakeDiscordEmbedsForEvents } from "../utils";
+import { GetNiceDate, MakeDiscordEmbedsForEvents } from "../utils";
 
 export async function registerToNextMidnight()
 {
 	let today = new Date();
-	console.log(today);
 	let tommorow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
-	console.log(tommorow);
 
 	const timeUntilMidnight = tommorow.getTime() - today.getTime();
-	console.log(timeUntilMidnight);
 
 	setTimeout(() => {
 		OnMidnight();
