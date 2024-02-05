@@ -64,6 +64,7 @@ class LoLAPIHandler
 			res = await axios.get(this.RIOT_URLS.SCHEDULE + leagueAPI.id + `&pageToken=${res.data.data.schedule.pages.newer}`, this.axiosGetConfig);
 		}
 		allEvents = allEvents.concat(res.data.data.schedule.events);
+		allEvents = allEvents.filter(event => event.state != "completed");
 		return allEvents;
 	}
 
@@ -180,7 +181,7 @@ class LoLAPIHandler
 		return { finalRanking, finalRecord };
 	}
 
-	async GetTeams()
+	async GetTeams(leagueCode: KnownLeagueCodes)
 	{
 		let res = await axios.get(this.RIOT_URLS.TEAMS, this.axiosGetConfig);
 		let KC = res.data.data.teams.filter((team: TeamAPI) => team.code == "KC");

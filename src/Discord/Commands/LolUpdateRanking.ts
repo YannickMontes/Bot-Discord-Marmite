@@ -39,7 +39,7 @@ export const command: SlashCommand = {
 			if(tournaments != null)
 			{
 				tournamentId = tournaments[0].id;
-				let canUpdate = lolAPIHandler.TournamentStageHasAtLeastOneCompletedMatch(tournamentId, stageSlug);
+				let canUpdate = true;//lolAPIHandler.TournamentStageHasAtLeastOneCompletedMatch(tournamentId, stageSlug);
 				if(!canUpdate)
 				{
 					interaction.editReply(":x: Impossible de modifier le ranking une fois la compétition commencée !\n"
@@ -54,7 +54,7 @@ export const command: SlashCommand = {
 		let possiblesTeamTags: string[] = GetTeamsOfStageInTournament(standings[0], stageSlug);
 
 		let unknownTeamTags = [];
-		for (let i = 0; i < 10 && i < possiblesTeamTags.length; i++) 
+		for (let i = 0; i < possiblesTeamTags.length; i++) 
 		{
 			const rankParam = interaction.options.get(`rank${i + 1}`);
 			if (!rankParam) 
@@ -158,6 +158,10 @@ export const command: SlashCommand = {
 		if(unknownTeamTags.length > 0)
 		{
 			notFoundTeams = "\n :x: Can't found following teams: " + unknownTeamTags;
+		}
+		
+		if(!rankingCorrect || unknownTeamTags.length > 0)
+		{
 			notFoundTeams += "\nPossibles teams are: " + possiblesTeamTags;
 		}
 
@@ -171,7 +175,7 @@ export const command: SlashCommand = {
 			.setThumbnail(league?.image as string)
 			.setColor(ConvertLeagueCodeToColor(leagueCode))
 			.setDescription(stringRanking)
-			.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug}`, iconURL: league?.image});
+			.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug} (Tournament ID: ${tournamentId})`, iconURL: league?.image});
 
 		interaction.editReply({embeds: [embed]});
 	},

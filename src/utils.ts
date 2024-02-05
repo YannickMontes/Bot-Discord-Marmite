@@ -189,8 +189,13 @@ export function MakeDiscordEmbedsForEvents(events: LoLEvent[], leagueCode: Known
 		{
 			if(event.state != "completed")
 			{
+				let strategy = "";
+				if(event.match.strategy)
+				{
+					strategy = event.match.strategy.type == "bestOf" ? `(BO ${event.match.strategy.count})` : `(${event.match.strategy.type})`;
+				}
 				let embed = new EmbedBuilder()
-					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code}`)
+					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code} *${strategy}*`)
 					.setDescription(`${GetNiceDate(event.startTime, true)}\n`)
 					.setThumbnail(GetResizedImageURL(event.match.teams[0].image))
 					.setImage(GetResizedImageURL(event.match.teams[1].image))
@@ -216,8 +221,13 @@ export function MakeDiscordEmbedsForEvents(events: LoLEvent[], leagueCode: Known
 					winnerCode = event.match.teams[1].code;
 					result = event.match.teams[1].result.gameWins + " - " + event.match.teams[0].result.gameWins;
 				}
+				let strategy = "";
+				if(event.match.strategy)
+				{
+					strategy = event.match.strategy.type == "bestOf" ? `(BO ${event.match.strategy.count})` : `(${event.match.strategy.type})`;
+				}
 				let embed = new EmbedBuilder()
-					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code}`)
+					.setTitle(`${event.match.teams[0].code} - ${event.match.teams[1].code} ${strategy}`)
 					.setDescription(`||**${winnerCode} WIN (${result})**||\n`)
 					.setThumbnail(GetResizedImageURL(event.match.teams[0].image))
 					.setImage(GetResizedImageURL(event.match.teams[1].image))
@@ -243,7 +253,21 @@ export function GetTeamsOfStageInTournament(standings: TournamentStandingAPI, st
 		{
 			for(let team of ranking.teams)
 			{
+				if(teamCodes.includes(team.code) || team.code.startsWith("TBD"))
+					continue;
 				teamCodes.push(team.code);
+			}
+		}
+		if(teamCodes.length == 0)
+		{
+			for(let match of stage.sections[0].matches)
+			{
+				for(let team of match.teams)
+				{
+					if(teamCodes.includes(team.code) || team.code.startsWith("TBD"))
+						continue;
+					teamCodes.push(team.code);
+				}
 			}
 		}
 	}

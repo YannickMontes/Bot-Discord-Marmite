@@ -63,7 +63,7 @@ export const command: SlashCommand = {
 				.setColor(ConvertLeagueCodeToColor(leagueCode))
 				.setDescription("No ranking.")
 				.setTimestamp(new Date())
-				.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug}`, iconURL: league?.image});
+				.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug} (Tournament ID: ${tournamentId})`, iconURL: league?.image});
 			interaction.editReply({embeds: [embed]});
 			return;
 		}
@@ -130,7 +130,7 @@ export const command: SlashCommand = {
 			.setColor(ConvertLeagueCodeToColor(leagueCode))
 			.setDescription(stringRanking)
 			.setTimestamp(new Date())
-			.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug}`, iconURL: league?.image});
+			.setFooter({text: `${leagueCode.toUpperCase()} - ${stageSlug} (Tournament ID: ${tournamentId})`, iconURL: league?.image});
 
 		interaction.editReply({embeds: [embed]});
 	},

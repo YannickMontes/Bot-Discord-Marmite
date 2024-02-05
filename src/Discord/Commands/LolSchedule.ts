@@ -12,13 +12,13 @@ export const command: SlashCommand = {
 		await interaction.deferReply();
 		const leagueNameOption = interaction.options.get("leaguecode");
 		let leagueCode: KnownLeagueCodes = leagueNameOption?.value as KnownLeagueCodes;
-		let description = "No current/upcoming tournaments.";
+		let description = "No current/upcoming events.";
 		let league = await lolAPIHandler.GetLeague(leagueCode);
 		let events = await lolAPIHandler.GetUpcomingScheduleForLeague(leagueCode);
 
 		let embeds: EmbedBuilder[] = [];
 		if(events && league)
-			MakeDiscordEmbedsForEvents(events, leagueCode, league);
+			embeds = MakeDiscordEmbedsForEvents(events, leagueCode, league);
 
 		if(embeds.length > 0)
 		{
