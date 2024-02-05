@@ -126,7 +126,7 @@ export function GetRankingDuplicates(ranking: string[]): string[]
 
 export function MergeRankings(oldRanking: string[], newRanking: string[]): string[] {
 	let mergedRanking: string[] = [];
-	for (let i = 0; i < oldRanking.length; i++) {
+	for (let i = 0; i < oldRanking.length || i < newRanking.length; i++) {
 		if (newRanking[i] != UNKNOWN_RANKING_CHAR)
 			mergedRanking.push(newRanking[i]);
 		else mergedRanking.push(oldRanking[i]);
